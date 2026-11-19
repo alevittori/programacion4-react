@@ -1,11 +1,11 @@
 
-import { Producto } from './components/Ej7';
-import { Contador } from './components/Ej2';
-import { PreguntaRespuesta } from './components/Ej3.tsx';
-import { ListaCompras } from './components/Ej5.tsx';
-import { Buscador } from './components/Ej6.tsx';
+import { Producto } from './Ej7.tsx';
+import { Contador } from './Ej2.tsx';
+import { PreguntaRespuesta } from './Ej3.tsx';
+import { ListaCompras } from './Ej5.tsx';
+import { Buscador } from './Ej6.tsx';
 import './App.css'
-import { ConversorTemperatura } from './components/Ej4.tsx';
+import { ConversorTemperatura } from './Ej4.tsx';
 
 function App() {
  
