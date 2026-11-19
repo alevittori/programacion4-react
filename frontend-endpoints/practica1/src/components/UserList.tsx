@@ -1,51 +1,107 @@
 import { useEffect, useState } from "react";
+
 interface User {
   id: number;
   name: string;
 }
+
+// Interfaz para el detalle completo que devuelve GET /user/{id}
+interface UserDetail {
+  id: number;
+  name: string;
+  age: number;
+  email: string;
+  country: { id: number; name: string } | null;
+  roles: { id: number; name: string }[];
+}
+
 export function UserList({ token }: { token: string }) {
   const [users, setUsers] = useState<User[]>([]);
-  const [error, setError] = useState<string | null>(null) // nuevo, junto a users
-  const [me, setMe] = useState<User | null>(null) 
+  const [error, setError] = useState<string | null>(null);
+  const [me, setMe] = useState<User | null>(null);
+  
+  // Estado para la Práctica 1: ID del usuario seleccionado y su detalle
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetail | null>(null);
 
+  // 1. Cargar la lista de usuarios
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/user`, {
       headers: { Authorization: `Bearer ${token}` },
-    }).then(async (response) => {
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.detail); // 401, 403…: es un objeto con detail
-        return;
-      }
-      setUsers(data); // 200: recién acá es una lista
-    });
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.detail);
+          return;
+        }
+        setUsers(data);
+      });
   }, [token]);
 
-useEffect(() => { // nuevo
-const headers = { Authorization: `Bearer ${token}` }
-const api = import.meta.env.VITE_API_URL
+  // 2. Cargar mi propio usuario (Paso 6)
+  useEffect(() => {
 
+    const headers = { Authorization: `Bearer ${token}` };
+    const api = import.meta.env.VITE_API_URL;
 
-fetch(`${api}/user/me/id`, { headers }) // 1) ¿quién soy? → { id }
-    .then((response) => response.json())
-    .then(({ id }) => fetch(`${api}/user/${id}`, { headers })) // 2) mis datos
-    .then((response) => response.json())
-    .then(setMe)
-}, [token]);
+    fetch(`${api}/user/me/id`, { headers })
+      .then((response) => response.json())
+      .then(({ id }) => fetch(`${api}/user/${id}`, { headers }))
+      .then((response) => response.json())
+      .then(setMe);
 
-if (error) return <p>{error}</p>
+  }, [token]);
 
+  // 3. Efecto para la Práctica 1: Cargar el detalle cuando cambia el ID seleccionado
+  useEffect(() => {
 
-return (
+    if (selectedUserId === null) {
+      setSelectedUserDetail(null);
+      return;
+    }
+
+    fetch(`${import.meta.env.VITE_API_URL}/user/${selectedUserId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => response.json())
+      .then((data) => setSelectedUserDetail(data));
+      
+  }, [selectedUserId, token]);
+
+  if (error) return <p>{error}</p>;
+
+  return (
     <>
-        <h1>Hola, {me?.name}</h1>
-        <ul>
+      <h1>Hola, {me?.name}</h1>
+      
+      <h2>Lista de Usuarios</h2>
+      <ul>
         {users.map((user) => (
-        <li key={user.id}>{user.name}</li>
+          <li key={user.id}>
+            {/* Hacemos clic en el nombre para ver su detalle */}
+            <button 
+              onClick={() => setSelectedUserId(user.id)}
+              style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+            >
+              {user.name}
+            </button>
+          </li>
         ))}
-        </ul>
+      </ul>
+
+      {/* Sección de la Práctica 1: Mostrar detalle del usuario seleccionado */}
+      {selectedUserDetail && (
+        <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc' }}>
+          <h3>Detalle de: {selectedUserDetail.name}</h3>
+          <p><strong>Email:</strong> {selectedUserDetail.email}</p>
+          <p><strong>Edad:</strong> {selectedUserDetail.age}</p>
+          <p><strong>País:</strong> {selectedUserDetail.country ? selectedUserDetail.country.name : 'Sin país'}</p>
+          <p><strong>Roles:</strong> {selectedUserDetail.roles.map(r => r.name).join(', ') || 'Ninguno'}</p>
+        </div>
+      )}
     </>
-)
+  );
 }
 
  
